@@ -1,0 +1,30 @@
+# Node dependencies
+node_modules/
+
+# Environment files (secrets)
+.env
+.env.local
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Build / output
+dist/
+build/
+coverage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Misc
+uploads/
+*.sqlite
+*.sqlite3
