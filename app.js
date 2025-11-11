@@ -1,180 +1,40 @@
 import express from 'express';
-import session from 'express-session';
-import MongoStore from 'connect-mongo';
-import mongoose from 'mongoose';
+import helmet from 'helmet';
 
-import User from './models/user.js';
-import Expense from './models/expense.js';
-import Category from './models/category.js';
-
-function calculateExpenseStats(expenses) {
-  const stats = {
-    count: expenses.length,
-    total: 0,
-    byCategory: {},
-  };
-
-  for (const e of expenses) {
-    const amt = Number(e.amount) || 0;
-    stats.total += amt;
-    const cat = (e.category && (e.category.name || e.category)) || 'uncategorized';
-    stats.byCategory[cat] = (stats.byCategory[cat] || 0) + amt;
-  }
-
-  return stats;
-}
+import expensesRouter from './controllers/expense.js';
+import adminRouter from './controllers/admin.js';
+import categoriesRouter from './controllers/category.js';
+import authRouter from './controllers/auth.js';
+import { sessionMiddleware, requireAdmin } from './middleware/auth.js';
+import { errorHandler, unknownEndpoint } from './middleware/error.js';
 
 const createApp = () => {
   const app = express();
+
+  // Remember, middleware functions are called in the order that they're encountered
+
+  // Trust first proxy (required for Render to properly handle HTTPS)
+  // https://expressjs.com/en/guide/behind-proxies.html
+  app.set("trust proxy", 1);
+
+  // Middleware to parse JSON from request bodies.
   app.use(express.json());
 
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
-      resave: false,
-      saveUninitialized: false,
-      store: MongoStore.create({
-        client: mongoose.connection.getClient(),
-        touchAfter: 24 * 3600, // lazy session update
-      }),
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-      },
-    })
-  );
+  // Security middleware
+  app.use(helmet());
 
-  // Authentication middleware
-  const requireAuth = (req, res, next) => {
-    if (!req.session || !req.session.userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    next();
-  };
+  // Session middleware
+  app.use(sessionMiddleware());
 
-  // Register
-  app.post('/auth/register', async (req, res) => {
-    try {
-      const { email, name, password } = req.body;
-      if (!email || !name || !password) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
+  app.use("/api/auth", authRouter);
+  app.use("/api/expenses", expensesRouter);
+  app.use("/api/categories", categoriesRouter);
+  app.use("/api/admin", requireAdmin, adminRouter);
 
-      const existing = await User.findOne({ email }).exec();
-      if (existing) return res.status(400).json({ error: 'Email already registered' });
-
-      const user = new User({ email, name });
-      await user.setPassword(password);
-      await user.save();
-
-      req.session.userId = user._id.toString();
-
-      res.status(201).json({ id: user._id.toString(), email: user.email, name: user.name });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to register' });
-    }
-  });
-
-  // Login
-  app.post('/auth/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      if (!email || !password) return res.status(400).json({ error: 'Missing email or password' });
-
-      const user = await User.findOne({ email }).exec();
-      if (!user) return res.status(401).json({ error: 'Invalid email or password' });
-
-      const ok = await user.validatePassword(password);
-      if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
-
-      req.session.userId = user._id.toString();
-
-      res.json({ id: user._id.toString(), email: user.email, name: user.name });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to login' });
-    }
-  });
-
-  // Logout
-  app.post('/auth/logout', requireAuth, async (req, res) => {
-    req.session.destroy((err) => {
-      if (err) return res.status(500).json({ error: 'Failed to logout' });
-      res.clearCookie('connect.sid');
-      res.json({ message: 'Logged out successfully' });
-    });
-  });
-
-  // Expense endpoints
-  app.get('/expenses/stats', requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId;
-      const expenses = await Expense.find({ user: userId }).populate('category').exec();
-      const stats = calculateExpenseStats(expenses);
-      res.json(stats);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to compute stats' });
-    }
-  });
-
-  app.get('/expenses', requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId;
-      const expenses = await Expense.find({ user: userId }).populate('category').sort({ date: -1 }).exec();
-      res.json(expenses);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to list expenses' });
-    }
-  });
-
-  app.post('/expenses', requireAuth, async (req, res) => {
-    try {
-      const userId = req.session.userId;
-      const { categoryId, amount, currency, date, note } = req.body;
-
-      if (amount == null || !categoryId) {
-        return res.status(400).json({ error: 'Missing required fields: categoryId and amount' });
-      }
-
-      // ensure category exists
-      const category = await Category.findById(categoryId).exec();
-      if (!category) return res.status(400).json({ error: 'Invalid categoryId' });
-
-      const expense = await Expense.create({
-        user: userId,
-        category: category._id,
-        amount: Number(amount),
-        currency: currency || 'EURO',
-        date: date ? new Date(date) : undefined,
-        note,
-      });
-
-      res.status(201).json(expense);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to create expense' });
-    }
-  });
-
-  // Fallbacks / error handlers
-  const unknownEndpoint = (_req, res) => {
-    res.status(404).send({ error: 'Unknown endpoint' });
-  };
-
+  // Important that this is at the end so that it only handles requests that did not match previous routes
   app.use(unknownEndpoint);
-
-  const handleError = (error, _req, res, next) => {
-    console.error(error && error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
-    next(error);
-  };
-
-  app.use(handleError);
+  // Important that this is at the end so that it handles errors from all routes
+  app.use(errorHandler);
 
   return app;
 };
