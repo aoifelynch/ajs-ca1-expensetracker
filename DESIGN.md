@@ -11,20 +11,7 @@ The Expense Tracker API is a RESTful web service designed to help users manage t
 - **Administrative Dashboard**: Complete system oversight for administrators
 - **Data Validation**: Comprehensive input validation and error handling
 
-### Target Users
-- **End Users**: Individuals tracking personal expenses
-- **Administrators**: System managers with oversight capabilities
-- **Developers**: API consumers building expense management applications
-
-## Database Design Choices
-
-### Technology Selection: MongoDB with Mongoose ODM
-
-**Rationale for NoSQL Choice:**
-- **Flexibility**: Expense data structures may evolve (adding new fields, metadata)
-- **Scalability**: Horizontal scaling capabilities for user growth
-- **JSON-Native**: Natural fit for REST API JSON payloads
-- **Development Speed**: Rapid prototyping and schema evolution
+## Database Design
 
 ### Entity Relationship Diagram
 
@@ -118,34 +105,10 @@ Relationships:
 ```
 
 ### HTTP Method Conventions
-- **GET**: Retrieve resources (idempotent)
+- **GET**: Retrieve resources
 - **POST**: Create new resources
-- **PUT**: Update existing resources (full replacement)
+- **PUT**: Update existing resources 
 - **DELETE**: Remove resources
-
-### Response Format Standardization
-
-**Success Responses:**
-```javascript
-// Single resource
-{
-  "message": "Operation successful",
-  "user": { /* resource data */ }
-}
-
-// Collection
-{
-  "expenses": [ /* array of resources */ ]
-}
-```
-
-**Error Responses:**
-```javascript
-{
-  "error": "Resource not found",
-  "status": 404
-}
-```
 
 ### Middleware Architecture
 
@@ -166,7 +129,7 @@ Relationships:
 - Reduced client-side security burden
 - Built-in Express.js ecosystem support
 
-**Role-Based Access Control (RBAC):**
+**Role-Based Access Control:**
 - **User Role**: Access only personal resources
 - **Admin Role**: System-wide access with oversight capabilities
 - **Middleware Enforcement**: Authorization checks at route level
@@ -198,46 +161,9 @@ userSchema.set("toJSON", {
 
 ### Security Headers & Session Protection
 - **Helmet.js**: Content Security Policy, XSS protection, clickjacking prevention
-- **HTTP-only cookies**: Prevent XSS access
 - **Secure cookies**: HTTPS-only in production
-- **SameSite cookies**: CSRF protection
-
-## Extra Mile Features
-
-### 1. Comprehensive Admin Dashboard
-**Implementation:**
-- Complete user management system
-- Cross-user expense oversight
-- Category administration with ownership transfer
-- System-wide analytics capabilities
-
-### 2. Advanced Input Validation
-**Features:**
-- Schema-based validation using express-validator
-- Custom ObjectId validators
-- Role-specific validation rules
-- Comprehensive error messaging
-
-### 3. Flexible Currency Support
-**Design:**
-- Currency field with default EUR setting
-- Extensible for multi-currency implementations
-- Validation ensures proper currency code format
-
-### 4. Data Seeding System
-**Features:**
-- Production-ready seed script
-- Realistic test data generation
-- Idempotent seeding (safe re-runs)
-- Multiple user roles and relationships
 
 ## Future Improvements
-
-### 1. Enhanced Security
-- **JWT Token Implementation**: For stateless architecture
-- **2FA Authentication**: Multi-factor authentication support
-- **Rate Limiting**: API abuse prevention
-- **Audit Logging**: Comprehensive action tracking
 
 ### 2. Advanced Features
 - **Expense Categories Hierarchy**: Nested category support
@@ -245,24 +171,6 @@ userSchema.set("toJSON", {
 - **Recurring Expenses**: Automated recurring transaction support
 - **File Attachments**: Receipt image uploads
 - **Multi-Currency Exchange**: Real-time currency conversion
-
-### 3. Performance Optimizations
-- **Database Indexing Strategy**: Advanced compound indexes
-- **Query Optimization**: Aggregation pipelines for analytics
-- **Caching Layer**: Redis integration for frequently accessed data
-- **Pagination**: Efficient large dataset handling
-
-### 4. API Enhancements
-- **GraphQL Support**: Flexible query capabilities
-- **Real-time Features**: WebSocket integration for live updates
-- **API Documentation**: OpenAPI/Swagger integration
-- **SDK Generation**: Client library generation
-
-### 5. Monitoring & Testing
-- **Application Monitoring**: Performance tracking
-- **User Analytics**: Usage pattern analysis
-- **Comprehensive Testing**: Unit, integration, and performance testing
-- **CI/CD Pipeline**: Automated testing and deployment
 
 ---
 
