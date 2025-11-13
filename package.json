@@ -8,9 +8,9 @@
     "start": "node index.js",
     "dev": "node index.js",
     "seed": "node utils/seed.js",
-    "test": "jest --runInBand",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/test-db SESSION_SECRET=test-secret jest --runInBand",
+    "test:watch": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/test-db SESSION_SECRET=test-secret jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/test-db SESSION_SECRET=test-secret jest --coverage"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -22,6 +22,10 @@
     "mongoose": "^8.19.2"
   },
   "devDependencies": {
-    "jest": "^30.2.0"
+    "@babel/preset-env": "^7.28.5",
+    "babel-jest": "^30.2.0",
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
   }
 }

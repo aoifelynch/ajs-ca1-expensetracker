@@ -23,6 +23,42 @@ export const registerSchema = {
   },
 };
 
+export const updateProfileSchema = {
+  name: {
+    in: ['body'],
+    optional: true,
+    isString: { errorMessage: "'name' must be a string" },
+    isLength: { options: { min: 1, max: 100 }, errorMessage: "'name' must be 1-100 chars" },
+    trim: true,
+  },
+  email: {
+    in: ['body'],
+    optional: true,
+    isEmail: { errorMessage: "'email' must be a valid email address" },
+  },
+  currentPassword: {
+    in: ['body'],
+    optional: true,
+    isString: { errorMessage: "'currentPassword' must be a string" },
+  },
+  newPassword: {
+    in: ['body'],
+    optional: true,
+    isStrongPassword: {
+      options: { minLength: 8, minNumbers: 1, minUppercase: 1, minSymbols: 0 },
+      errorMessage: "'newPassword' must be at least 8 characters, include a number and an uppercase letter",
+    },
+  },
+};
+
+export const deleteAccountSchema = {
+  password: {
+    in: ['body'],
+    notEmpty: { errorMessage: "'password' field is required" },
+    isString: { errorMessage: "'password' must be a string" },
+  },
+};
+
 export const loginSchema = {
   email: {
     in: ['body'],
@@ -88,7 +124,12 @@ export const expenseSchema = {
     optional: true,
     isString: { errorMessage: "'note' must be a string" },
     isLength: { options: { max: 1000 }, errorMessage: "'note' max length is 1000 chars" },
-    trim: true,
+  },
+  description: {
+    in: ['body'], 
+    optional: true,
+    isString: { errorMessage: "'description' must be a string" },
+    isLength: { options: { max: 1000 }, errorMessage: "'description' max length is 1000 chars" },
   },
 };
 
@@ -118,7 +159,7 @@ export const adminExpenseSchema = {
   ...expenseSchema,
   userId: {
     in: ['body'],
-    optional: true, // Optional for updates
+    optional: true, 
     custom: {
       options: (value) => !value || mongoose.Types.ObjectId.isValid(value),
       errorMessage: "'userId' must be a valid ObjectId",
@@ -131,7 +172,7 @@ export const adminCategorySchema = {
   ...categorySchema,
   userId: {
     in: ['body'],
-    optional: true, // Optional - if not provided, admin becomes owner
+    optional: true, // if not provided, admin becomes owner
     custom: {
       options: (value) => !value || mongoose.Types.ObjectId.isValid(value),
       errorMessage: "'userId' must be a valid ObjectId",

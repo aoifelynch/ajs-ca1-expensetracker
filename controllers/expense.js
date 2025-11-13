@@ -14,17 +14,21 @@ const expensesRouter = Router();
 // All routes here require authentication
 expensesRouter.use(requireAuth);
 
-// GET / - list the authenticated user's expenses (optional filter by categoryId)
+// GET - list the authenticated user's expenses 
 expensesRouter.get('/', async (req, res) => {
   const filter = { user: req.user._id };
   if (req.query.categoryId) {
     filter.category = req.query.categoryId;
   }
   const expenses = await Expense.find(filter).populate('category').sort({ date: -1 }).exec();
-  res.json(expenses);
+  res.status(200).json({
+    success: true,
+    data: expenses,
+    message: 'Expenses retrieved successfully'
+  });
 });
 
-// GET /:id - return the expense if it belongs to the user or the user is admin
+// GET with ID - return the expense if it belongs to the user or the user is admin
 expensesRouter.get('/:id', validate(expenseIdParam), async (req, res) => {
   const expense = await Expense.findById(req.params.id).populate('category').exec();
   if (!expense) throw new HttpError(NOT_FOUND, 'Could not find expense');
@@ -34,12 +38,16 @@ expensesRouter.get('/:id', validate(expenseIdParam), async (req, res) => {
     throw new HttpError(FORBIDDEN, 'Forbidden');
   }
 
-  res.json(expense);
+  res.status(200).json({
+    success: true,
+    data: expense,
+    message: 'Expense retrieved successfully'
+  });
 });
 
-// POST / - create an expense assigned to a category
+// POST - create an expense assigned to a category
 expensesRouter.post('/', validate(expenseSchema), async (req, res) => {
-  const { categoryId, amount, currency, date, note } = req.body;
+  const { categoryId, amount, currency, date, note, description } = req.body;
 
   // ensure category exists
   const category = await Category.findById(categoryId).exec();
@@ -51,13 +59,18 @@ expensesRouter.post('/', validate(expenseSchema), async (req, res) => {
     amount: Number(amount),
     currency: currency || 'EUR',
     date: date ? new Date(date) : undefined,
-    note,
+    note: note || description, 
+    description: description || note, 
   });
 
-  res.status(201).json(expense);
+  res.status(201).json({
+    success: true,
+    data: expense,
+    message: 'Expense created successfully'
+  });
 });
 
-// DELETE /:id - owner or admin can delete
+// DELETE with ID - owner or admin can delete
 expensesRouter.delete('/:id', validate(expenseIdParam), async (req, res) => {
   const expense = await Expense.findById(req.params.id).exec();
   if (!expense) throw new HttpError(NOT_FOUND, 'Could not find expense');
@@ -68,14 +81,15 @@ expensesRouter.delete('/:id', validate(expenseIdParam), async (req, res) => {
 
   await Expense.findByIdAndDelete(req.params.id).exec();
   res.status(200).json({ 
-    message: 'Expense deleted successfully',
-    deletedExpenseId: req.params.id 
+    success: true,
+    data: { id: req.params.id },
+    message: 'Expense deleted successfully'
   });
 });
 
-// PUT /:id - update an expense (owner or admin)
+// PUT with ID - update an expense (owner or admin)
 expensesRouter.put('/:id', validate(expenseIdParam), validate(expenseSchema), async (req, res) => {
-  const { categoryId, amount, currency, date, note } = req.body;
+  const { categoryId, amount, currency, date, note, description } = req.body;
   
   // Find the existing expense
   const expense = await Expense.findById(req.params.id).exec();
@@ -98,14 +112,16 @@ expensesRouter.put('/:id', validate(expenseIdParam), validate(expenseSchema), as
       amount: Number(amount),
       currency: currency || expense.currency,
       date: date ? new Date(date) : expense.date,
-      note: note !== undefined ? note : expense.note,
+      note: note !== undefined ? note : (description !== undefined ? description : expense.note),
+      description: description !== undefined ? description : (note !== undefined ? note : expense.description),
     },
     { new: true, runValidators: true }
   ).populate('category').exec();
 
   res.status(200).json({
-    message: 'Expense updated successfully',
-    expense: updatedExpense
+    success: true,
+    data: updatedExpense,
+    message: 'Expense updated successfully'
   });
 });
 

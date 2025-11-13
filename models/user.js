@@ -30,6 +30,7 @@ userSchema.set("toJSON", {
     returnedObject.id = returnedObject._id.toString();
     delete returnedObject._id;
     delete returnedObject.__v;
+    delete returnedObject.passwordHash;
     delete returnedObject.createdAt;
     delete returnedObject.updatedAt;
   },
@@ -41,6 +42,9 @@ userSchema.statics.hashPassword = async function (password) {
 };
 
 userSchema.methods.verifyPassword = async function (password) {
+  if (!password) {
+    return false;
+  }
   return await bcrypt.compare(password, this.passwordHash);
 };
 

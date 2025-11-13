@@ -11,14 +11,22 @@ const categoriesRouter = Router();
 // Public: list categories
 categoriesRouter.get('/', async (_req, res) => {
   const cats = await Category.find().sort({ name: 1 }).exec();
-  res.json(cats);
+  res.status(200).json({
+    success: true,
+    data: cats,
+    message: 'Categories retrieved successfully'
+  });
 });
 
 // Get single category
 categoriesRouter.get('/:id', validate(categoryIdParam), async (req, res) => {
   const cat = await Category.findById(req.params.id).exec();
   if (!cat) throw new HttpError(NOT_FOUND, 'Category not found');
-  res.json(cat);
+  res.status(200).json({
+    success: true,
+    data: cat,
+    message: 'Category retrieved successfully'
+  });
 });
 
 // List expenses within a category. Auth required.
@@ -30,10 +38,18 @@ categoriesRouter.get('/:id/expenses', requireAuth, validate(categoryIdParam), as
   // If admin, return all expenses in category; otherwise only the user's
   if (req.user.role === 'admin') {
     const expenses = await Expense.find({ category: catId }).populate('user category').sort({ date: -1 }).exec();
-    res.json(expenses);
+    res.status(200).json({
+      success: true,
+      data: expenses,
+      message: 'Category expenses retrieved successfully (admin view)'
+    });
   } else {
     const expenses = await Expense.find({ category: catId, user: req.user._id }).populate('category').sort({ date: -1 }).exec();
-    res.json(expenses);
+    res.status(200).json({
+      success: true,
+      data: expenses,
+      message: 'Category expenses retrieved successfully'
+    });
   }
 });
 

@@ -166,20 +166,10 @@ userSchema.set("toJSON", {
 ## Future Improvements
 
 ### 2. Advanced Features
-- **Expense Categories Hierarchy**: Nested category support
 - **Budget Management**: Spending limits and alerts
-- **Recurring Expenses**: Automated recurring transaction support
 - **File Attachments**: Receipt image uploads
 - **Multi-Currency Exchange**: Real-time currency conversion
-
----
-
-**Technology Stack:**
-- **Backend**: Node.js v18+, Express.js v5
-- **Database**: MongoDB v7+ with Mongoose ODM
-- **Authentication**: Express-session with connect-mongo
-- **Security**: bcrypt, helmet, express-validator
-- **Development**: ESM modules, Jest testing framework
+- **Company-specific Data**: Create users assigned to an admin to create companies within the application
 
 ### Category Model
 - `name` (String, required)

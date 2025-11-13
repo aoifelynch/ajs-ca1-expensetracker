@@ -7,7 +7,8 @@ const expenseSchema = new mongoose.Schema({
   currency: { type: String, default: 'EURO' },
   date: { type: Date, default: Date.now },
   note: { type: String, trim: true },
-  createdAt: { type: Date, default: Date.now   },
+  description: { type: String, trim: true }, 
+  createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

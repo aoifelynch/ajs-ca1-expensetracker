@@ -5,6 +5,7 @@ import expensesRouter from './controllers/expense.js';
 import adminRouter from './controllers/admin.js';
 import categoriesRouter from './controllers/category.js';
 import authRouter from './controllers/auth.js';
+import publicRouter from './controllers/public.js';
 import { sessionMiddleware, requireAdmin } from './middleware/auth.js';
 import { errorHandler, unknownEndpoint } from './middleware/error.js';
 
@@ -27,6 +28,7 @@ const createApp = () => {
   app.use(sessionMiddleware());
 
   app.use("/api/auth", authRouter);
+  app.use("/api/public", publicRouter);
   app.use("/api/expenses", expensesRouter);
   app.use("/api/categories", categoriesRouter);
   app.use("/api/admin", requireAdmin, adminRouter);
